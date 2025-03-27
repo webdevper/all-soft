@@ -1,0 +1,112 @@
+.section {
+  position: relative;
+  height: 100vh;
+  width: 100vw;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(45deg, #6bdfff, #8298af);
+  overflow: hidden;
+}
+.section input {
+  outline: none;
+  /* background: #ffffff42; */
+}
+/* Center the login section */
+.loginSection {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: #f4f4f4;
+}
+
+.shape1 {
+  width: 400px;
+  height: 400px;
+  background: #f56cce33;
+  position: absolute;
+  top: -50px;
+  left: -50px;
+  border-radius: 50%;
+}
+.shape2 {
+  width: 200px;
+  height: 200px;
+  background: rgba(255, 255, 255, 0.2);
+  position: absolute;
+  bottom: -50px;
+  right: -50px;
+  border-radius: 50%;
+}
+
+/* Form styling */
+.loginForm {
+  background: rgba(255, 255, 255, 0.1); /* Transparent white */
+  backdrop-filter: blur(10px); /* Blurry effect */
+  -webkit-backdrop-filter: blur(10px); /* Safari support */
+  padding: 30px;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  width: 400px;
+  max-width: 80%;
+  text-align: center;
+  position: relative;
+}
+
+.formTitle {
+  margin-bottom: 20px;
+  font-size: 22px;
+  font-weight: 600;
+  color: #333;
+}
+
+.formLabel {
+  display: block;
+  text-align: left;
+  margin: 10px 0 5px;
+}
+
+.formInput {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 14px;
+}
+.formInput[type="number"]::-webkit-outer-spin-button,
+.formInput[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.formInput[type="number"] {
+  -moz-appearance: textfield; /* Hide arrows in Firefox */
+}
+
+/* Button */
+.formButton {
+  width: 100%;
+  padding: 10px;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-size: 16px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.formButton:hover {
+  background: #0056b3;
+}
+
+.fromIndication {
+  color: #8298af;
+  margin-top: 20px;
+}
+.fromIndication span {
+  text-decoration: underline;
+  color: #007bff;
+  cursor: pointer;
+}
