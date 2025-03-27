@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import style from "../styles/login.module.css"; // Import CSS Module
 
 const Login = () => {
@@ -8,6 +8,8 @@ const Login = () => {
   const [otpSent, setOtpSent] = useState(false); // OTP sent state
   const [generatedOtp, setGeneratedOtp] = useState(""); // Store generated OTP (for testing)
   const [token, setToken] = useState(""); // Store authentication token
+  const [timer, setTimer] = useState(60); // 1-minute timer for resend
+  const [resendDisabled, setResendDisabled] = useState(true); // Resend button state
 
   // Function to handle OTP request (mock API for testing)
   const sendOtp = () => {
@@ -17,8 +19,10 @@ const Login = () => {
     }
 
     const fakeOtp = Math.floor(100000 + Math.random() * 900000).toString(); // Generate 6-digit OTP
-    setGeneratedOtp(fakeOtp); // Store OTP for testing
+    setGeneratedOtp(fakeOtp); 
     setOtpSent(true);
+    setResendDisabled(true); 
+    setTimer(60); 
     alert(`OTP sent successfully! (For testing: ${fakeOtp})`);
   };
 
@@ -32,6 +36,19 @@ const Login = () => {
       alert("Invalid OTP. Try again.");
     }
   };
+
+  // Timer effect for resend OTP
+  useEffect(() => {
+    let countdown;
+    if (otpSent && timer > 0) {
+      countdown = setInterval(() => {
+        setTimer((prev) => prev - 1);
+      }, 1000);
+    } else if (timer === 0) {
+      setResendDisabled(false); // Enable resend OTP
+    }
+    return () => clearInterval(countdown); // Cleanup
+  }, [otpSent, timer]);
 
   return (
     <section className={style.section}>
@@ -50,6 +67,7 @@ const Login = () => {
             type="text"
             placeholder="Enter your name"
             id="name"
+            required
             className={style.formInput}
           />
 
@@ -70,6 +88,7 @@ const Login = () => {
             type="email"
             placeholder="Enter your email"
             id="email"
+            required
             className={style.formInput}
           />
 
@@ -80,6 +99,7 @@ const Login = () => {
             type="tel"
             placeholder="Enter Mobile Number"
             id="mobile"
+            required
             className={style.formInput}
           />
 
@@ -117,7 +137,11 @@ const Login = () => {
           />
 
           {!otpSent ? (
-            <button type="button" className={style.formButton} onClick={sendOtp}>
+            <button
+              type="button"
+              className={style.formButton}
+              onClick={sendOtp}
+            >
               Send OTP
             </button>
           ) : (
@@ -133,10 +157,32 @@ const Login = () => {
                 value={otp}
                 onChange={(e) => setOtp(e.target.value)}
               />
-              <button type="button" className={style.formButton} onClick={verifyOtp}>
+
+              <button
+                type="button"
+                className={style.formButton}
+                onClick={verifyOtp}
+              >
                 Verify OTP
               </button>
-              <p className={style.testOtp}>Test OTP: {generatedOtp}</p> {/* Show OTP for testing */}
+
+              {/* Resend OTP Section with Timer */}
+              <div className={style.resend}>
+                {resendDisabled ? (
+                  <p>Resend OTP in {timer}s</p>
+                ) : (
+                  <button
+                    type="button"
+                    className={style.resendButton}
+                    onClick={sendOtp}
+                  >
+                    Resend OTP
+                  </button>
+                )}
+              </div>
+
+              <p className={style.testOtp}>Test OTP: {generatedOtp}</p>{" "}
+              {/* Show OTP for testing */}
             </>
           )}
 

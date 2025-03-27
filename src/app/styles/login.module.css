@@ -100,6 +100,21 @@
 .formButton:hover {
   background: #0056b3;
 }
+.resend {
+  display: flex;
+  justify-content: end;
+  margin: 10px 0;
+}
+.resend p{
+    color: #68788a;
+}
+.resend button {
+  font-size: 14px;
+  color: #007bff;
+  cursor: pointer;
+  background: none;
+  border: none;
+}
 
 .fromIndication {
   color: #8298af;
