@@ -1,25 +1,39 @@
 .navbar {
-    padding: 20px 30px;
-  }
-  .navbar ul {
-    display: flex;
-    justify-content: space-evenly;
-  }
-  .navbar ul li {
-    list-style: none;
-    cursor: pointer;
+  padding: 20px 30px;
+}
+.navbar ul {
+  display: flex;
+  justify-content: space-evenly;
+}
+.navbar ul li {
+  list-style: none;
+  cursor: pointer;
+}
+
+.navbar ul li a {
+  text-decoration: none;
+  border: 1px solid #1a1852;
+  border-radius: 24px;
+  padding: 10px 20px;
+  background: #1a1852;
+  color: #ffffff;
+  transition: all 0.2s ease-in-out;
+}
+.navbar ul li .active {
+  color: #1a1852;
+  background: #ffffff;
+}
+
+
+@media (max-width: 480px) {
+  .navbar ul li a {
+    font-size: 0.7rem;
   }
   .navbar ul li a {
-    text-decoration: none;
-    color: #3d7dff;
+    border-radius: 24px;
+    padding: 5px 10px;
+    font-size: 8px;
+    background: #1a1852;
+    color: #ffffff;
   }
-  .navbar ul li a:hover {
-    text-decoration: none;
-    color: #747f95;
-  }
-  @media (max-width: 480px) {
-    .navbar ul li a {
-      font-size: 0.7rem;
-    }
-  }
-  
+}
