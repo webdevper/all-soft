@@ -1,43 +1,49 @@
+"use client";
 import React, { useState, useEffect } from "react";
-import style from "../styles/login.module.css"; // Import CSS Module
+import { useRouter } from "next/navigation"; // Import useRouter
+import style from "../styles/login.module.css";
 
 const Login = () => {
-  const [registration, setRegistration] = useState(false); // Toggle Login/Register
-  const [mobile, setMobile] = useState(""); // Mobile number state
-  const [otp, setOtp] = useState(""); // OTP state
-  const [otpSent, setOtpSent] = useState(false); // OTP sent state
-  const [generatedOtp, setGeneratedOtp] = useState(""); // Store generated OTP (for testing)
-  const [token, setToken] = useState(""); // Store authentication token
-  const [timer, setTimer] = useState(60); // 1-minute timer for resend
-  const [resendDisabled, setResendDisabled] = useState(true); // Resend button state
+  const [registration, setRegistration] = useState(false);
+  const [mobile, setMobile] = useState("");
+  const [otp, setOtp] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+  const [generatedOtp, setGeneratedOtp] = useState("");
+  const [token, setToken] = useState("");
+  const [timer, setTimer] = useState(60);
+  const [resendDisabled, setResendDisabled] = useState(true);
+  const [isLoggedIn, setIsLoggedIn] = useState(false); // New state for login status
 
-  // Function to handle OTP request (mock API for testing)
+  const router = useRouter(); // Initialize useRouter
+
   const sendOtp = () => {
     if (mobile.length !== 10) {
       alert("Please enter a valid 10-digit mobile number.");
       return;
     }
 
-    const fakeOtp = Math.floor(100000 + Math.random() * 900000).toString(); // Generate 6-digit OTP
-    setGeneratedOtp(fakeOtp); 
+    const fakeOtp = Math.floor(100000 + Math.random() * 900000).toString();
+    setGeneratedOtp(fakeOtp);
     setOtpSent(true);
-    setResendDisabled(true); 
-    setTimer(60); 
+    setResendDisabled(true);
+    setTimer(60);
     alert(`OTP sent successfully! (For testing: ${fakeOtp})`);
   };
 
-  // Function to handle OTP verification
   const verifyOtp = () => {
     if (otp === generatedOtp) {
       const fakeToken = `token-${Math.random().toString(36).substr(2, 10)}`;
-      setToken(fakeToken); // Store fake token
-      alert("Login successful! (Token: " + fakeToken + ")");
+      setToken(fakeToken);
+      setIsLoggedIn(true);
+      alert("Login successful!");
+
+      // Redirect to the upload-document page
+      router.push("/upload-document");
     } else {
       alert("Invalid OTP. Try again.");
     }
   };
 
-  // Timer effect for resend OTP
   useEffect(() => {
     let countdown;
     if (otpSent && timer > 0) {
@@ -45,9 +51,9 @@ const Login = () => {
         setTimer((prev) => prev - 1);
       }, 1000);
     } else if (timer === 0) {
-      setResendDisabled(false); // Enable resend OTP
+      setResendDisabled(false);
     }
-    return () => clearInterval(countdown); // Cleanup
+    return () => clearInterval(countdown);
   }, [otpSent, timer]);
 
   return (
@@ -56,7 +62,6 @@ const Login = () => {
       <div className={style.shape2}></div>
 
       {registration ? (
-        // Registration Form
         <form className={style.loginForm}>
           <h3 className={style.formTitle}>Register Here</h3>
 
@@ -120,7 +125,6 @@ const Login = () => {
           </div>
         </form>
       ) : (
-        // Login Form with OTP
         <form className={style.loginForm}>
           <h3 className={style.formTitle}>Login Here</h3>
 
@@ -166,7 +170,6 @@ const Login = () => {
                 Verify OTP
               </button>
 
-              {/* Resend OTP Section with Timer */}
               <div className={style.resend}>
                 {resendDisabled ? (
                   <p>Resend OTP in {timer}s</p>
@@ -181,8 +184,7 @@ const Login = () => {
                 )}
               </div>
 
-              <p className={style.testOtp}>Test OTP: {generatedOtp}</p>{" "}
-              {/* Show OTP for testing */}
+              <p className={style.testOtp}>Test OTP: {generatedOtp}</p>
             </>
           )}
 

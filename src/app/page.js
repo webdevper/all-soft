@@ -1,15 +1,17 @@
-'use client'
-import style from './page.module.css';
+"use client";
+import style from "./page.module.css";
 import OtpAuth from "./components/login";
+// import OtpAuth from "./components/uploadDoc";
+// import OtpAuth from "./components/docSearch";
 
 const Page = () => {
   return (
-   <>
-<section className={style.section}>
-<OtpAuth/>
-</section>
-   </>
-  )
-}
+    <>
+      <section>
+        <OtpAuth />
+      </section>
+    </>
+  );
+};
 
-export default Page
+export default Page;
