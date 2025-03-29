@@ -1,5 +1,5 @@
 .navbar {
-  padding: 20px 30px;
+  padding: 40px 60px;
 }
 .navbar ul {
   display: flex;
@@ -26,6 +26,9 @@
 
 
 @media (max-width: 480px) {
+  .navbar {
+    padding: 20px 30px;
+  }
   .navbar ul li a {
     font-size: 0.7rem;
   }

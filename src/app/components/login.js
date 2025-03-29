@@ -1,46 +1,91 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation"; // Import useRouter
+import { useRouter } from "next/navigation";
 import style from "../styles/login.module.css";
 
 const Login = () => {
   const [registration, setRegistration] = useState(false);
-  const [mobile, setMobile] = useState("");
+  const [mobile, setMobile] = useState("6263986109"); // Pre-filled with your mobile number
   const [otp, setOtp] = useState("");
   const [otpSent, setOtpSent] = useState(false);
-  const [generatedOtp, setGeneratedOtp] = useState("");
-  const [token, setToken] = useState("");
   const [timer, setTimer] = useState(60);
   const [resendDisabled, setResendDisabled] = useState(true);
-  const [isLoggedIn, setIsLoggedIn] = useState(false); // New state for login status
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const router = useRouter(); // Initialize useRouter
+  const router = useRouter();
 
-  const sendOtp = () => {
+  const sendOtp = async () => {
     if (mobile.length !== 10) {
-      alert("Please enter a valid 10-digit mobile number.");
+      setError("Please enter a valid 10-digit mobile number.");
       return;
     }
 
-    const fakeOtp = Math.floor(100000 + Math.random() * 900000).toString();
-    setGeneratedOtp(fakeOtp);
-    setOtpSent(true);
-    setResendDisabled(true);
-    setTimer(60);
-    alert(`OTP sent successfully! (For testing: ${fakeOtp})`);
+    setIsLoading(true);
+    setError("");
+    
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/generateOTP`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          mobile_number: mobile
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setOtpSent(true);
+        setResendDisabled(true);
+        setTimer(60);
+      } else {
+        setError(data.message || "Failed to send OTP");
+      }
+    } catch (err) {
+      setError("Network error. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const verifyOtp = () => {
-    if (otp === generatedOtp) {
-      const fakeToken = `token-${Math.random().toString(36).substr(2, 10)}`;
-      setToken(fakeToken);
-      setIsLoggedIn(true);
-      alert("Login successful!");
+  const verifyOtp = async () => {
+    if (otp.length !== 6) {
+      setError("Please enter a valid 6-digit OTP.");
+      return;
+    }
 
-      // Redirect to the upload-document page
-      router.push("/upload-document");
-    } else {
-      alert("Invalid OTP. Try again.");
+    setIsLoading(true);
+    setError("");
+    
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/validateOTP`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          mobile_number: mobile,
+          otp: otp
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // Store the token in localStorage or context for future API calls
+        localStorage.setItem("token", data.token);
+        // Redirect to the upload-document page
+        router.push("/upload-document");
+      } else {
+        setError(data.message || "Invalid OTP. Please try again.");
+      }
+    } catch (err) {
+      setError("Network error. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -63,53 +108,32 @@ const Login = () => {
 
       {registration ? (
         <form className={style.loginForm}>
-          <h3 className={style.formTitle}>Register Here</h3>
+          <h3 className={style.formTitle}>Admin Registration</h3>
 
-          <label htmlFor="name" className={style.formLabel}>
-            Full Name
+          <label htmlFor="username" className={style.formLabel}>
+            Username
           </label>
           <input
             type="text"
-            placeholder="Enter your name"
-            id="name"
+            placeholder="Enter username"
+            id="username"
             required
             className={style.formInput}
           />
 
-          <label htmlFor="profession" className={style.formLabel}>
-            Profession
+          <label htmlFor="password" className={style.formLabel}>
+            Password
           </label>
           <input
-            type="text"
-            placeholder="Enter Profession"
-            id="profession"
-            className={style.formInput}
-          />
-
-          <label htmlFor="email" className={style.formLabel}>
-            Email
-          </label>
-          <input
-            type="email"
-            placeholder="Enter your email"
-            id="email"
+            type="password"
+            placeholder="Enter password"
+            id="password"
             required
             className={style.formInput}
           />
 
-          <label htmlFor="mobile" className={style.formLabel}>
-            Number
-          </label>
-          <input
-            type="tel"
-            placeholder="Enter Mobile Number"
-            id="mobile"
-            required
-            className={style.formInput}
-          />
-
-          <button type="submit" className={style.formButton}>
-            Register
+          <button type="submit" className={style.formButton} disabled={isLoading}>
+            {isLoading ? "Registering..." : "Register"}
           </button>
 
           <div className={style.fromIndication}>
@@ -128,6 +152,8 @@ const Login = () => {
         <form className={style.loginForm}>
           <h3 className={style.formTitle}>Login Here</h3>
 
+          {error && <div className={style.errorMessage}>{error}</div>}
+
           <label htmlFor="mobile" className={style.formLabel}>
             Mobile Number
           </label>
@@ -137,7 +163,8 @@ const Login = () => {
             id="mobile"
             className={style.formInput}
             value={mobile}
-            onChange={(e) => setMobile(e.target.value)}
+            onChange={(e) => setMobile(e.target.value.replace(/\D/g, '').slice(0, 10))}
+            maxLength={10}
           />
 
           {!otpSent ? (
@@ -145,8 +172,9 @@ const Login = () => {
               type="button"
               className={style.formButton}
               onClick={sendOtp}
+              disabled={isLoading}
             >
-              Send OTP
+              {isLoading ? "Sending..." : "Send OTP"}
             </button>
           ) : (
             <>
@@ -155,19 +183,21 @@ const Login = () => {
               </label>
               <input
                 type="number"
-                placeholder="Enter OTP"
+                placeholder="Enter 6-digit OTP"
                 id="otp"
                 className={style.formInput}
                 value={otp}
-                onChange={(e) => setOtp(e.target.value)}
+                onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                maxLength={6}
               />
 
               <button
                 type="button"
                 className={style.formButton}
                 onClick={verifyOtp}
+                disabled={isLoading}
               >
-                Verify OTP
+                {isLoading ? "Verifying..." : "Verify OTP"}
               </button>
 
               <div className={style.resend}>
@@ -178,19 +208,18 @@ const Login = () => {
                     type="button"
                     className={style.resendButton}
                     onClick={sendOtp}
+                    disabled={isLoading}
                   >
                     Resend OTP
                   </button>
                 )}
               </div>
-
-              <p className={style.testOtp}>Test OTP: {generatedOtp}</p>
             </>
           )}
 
           <div className={style.fromIndication}>
             <div>
-              Create an account?{" "}
+              Admin?{" "}
               <span
                 onClick={() => setRegistration(true)}
                 className={style.toggleForm}
