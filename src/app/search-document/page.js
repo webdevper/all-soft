@@ -6,13 +6,13 @@ import "react-datepicker/dist/react-datepicker.css";
 import styles from "../styles/docSearch.module.css";
 import Navbar from "../components/navbar";
 
-// Dynamically import components
+
 const DatePicker = dynamic(() => import("react-datepicker").then((mod) => mod.default), { ssr: false });
 const Select = dynamic(() => import("react-select").then((mod) => mod.default), { ssr: false });
 const CreatableSelect = dynamic(() => import("react-select/creatable").then((mod) => mod.default), { ssr: false });
 
 const DocumentSearch = () => {
-  // Form state
+ 
   const [searchParams, setSearchParams] = useState({
     major_head: null,
     minor_head: null,
@@ -63,7 +63,7 @@ const DocumentSearch = () => {
   useEffect(() => {
     const fetchTags = async () => {
       try {
-        // Try real API first
+       
         const response = await axios.get('/api/documentTags', {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -90,7 +90,7 @@ const DocumentSearch = () => {
       try {
         let options = [];
         if (searchParams.major_head.value === 'Personal') {
-          // Try real API first
+          
           const response = await axios.get('/api/personalNames', {
             headers: {
               'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -98,7 +98,8 @@ const DocumentSearch = () => {
           });
           options = response.data;
         } else {
-          // Try real API first
+          
+          
           const response = await axios.get('/api/professionalDepartments', {
             headers: {
               'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -108,8 +109,8 @@ const DocumentSearch = () => {
         }
         
         setMinorHeadOptions(options.map(item => ({
-          value: item.id || item, // Handle both objects and strings
-          label: item.name || item // Handle both objects and strings
+          value: item.id || item, 
+          label: item.name || item 
         })));
       } catch (err) {
         console.error("Using mock data due to error:", err);
@@ -128,7 +129,7 @@ const DocumentSearch = () => {
   }, [searchParams.major_head]);
 
 
-  // Handle search form submission
+
   const handleSearch = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -222,7 +223,6 @@ const DocumentSearch = () => {
     }
   };
 
-  // Update search parameters
   const handleParamChange = (name, value) => {
     setSearchParams(prev => ({
       ...prev,
@@ -231,7 +231,6 @@ const DocumentSearch = () => {
     }));
   };
 
-  // Determine if preview is supported
   const isPreviewSupported = (file) => {
     return file.type.includes('image/') || file.type === 'application/pdf';
   };
@@ -258,6 +257,7 @@ const DocumentSearch = () => {
                   placeholder="Select category"
                   isClearable
                   classNamePrefix="select"
+                  className={styles.select}
                 />
               </div>
 
@@ -278,6 +278,7 @@ const DocumentSearch = () => {
                   }
                   isClearable
                   classNamePrefix="select"
+                  className={styles.select}
                 />
               </div>
 
@@ -322,6 +323,7 @@ const DocumentSearch = () => {
                   placeholder="Search or add tags"
                   isClearable
                   classNamePrefix="select"
+                  className={styles.select}
                 />
               </div>
 
@@ -364,14 +366,14 @@ const DocumentSearch = () => {
             {searchResults.length > 0 && (
               <div className={styles.resultsActions}>
                 <span className={styles.resultsCount}>
-                  {searchResults.length} documents found
+                  {searchResults.length} documents found 
                 </span>
                 <button
                   onClick={handleDownloadAll}
                   className={styles.secondaryButton}
                   disabled={isLoading}
                 >
-                  Download All as ZIP
+                    Download All as ZIP
                 </button>
               </div>
             )}
@@ -430,7 +432,7 @@ const DocumentSearch = () => {
                           {file.type.split('/').pop().toUpperCase()}
                         </span>
                       </td>
-                      <td>{file.size}</td>
+                      <td>{file.size}KB</td>
                       <td>{new Date(file.date).toLocaleDateString()}</td>
                       <td>
                         <span className={styles.categoryBadge}>

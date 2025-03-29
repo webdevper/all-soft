@@ -19,6 +19,8 @@
   font-weight: 600;
   color: #1a1a1a;
   margin-bottom: 24px;
+  min-width: fit-content;
+  margin-right: 30px;
 }
 
 .searchForm {
@@ -120,6 +122,7 @@
 .resultsCount {
   font-size: 14px;
   color: #718096;
+  margin: 5px;
 }
 
 .loadingState {
@@ -398,7 +401,7 @@
   background-color: #ebf8ff;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 500px) {
   .formGrid {
     grid-template-columns: 1fr;
   }
@@ -410,4 +413,52 @@
   .fileMeta {
     grid-template-columns: 1fr;
   }
+  .panelTitle {
+    font-size: 14px;
+    margin-bottom: 14px;
+  }
+  .formLabel {
+    font-size: 12px;
+  }
+  .select{
+    font-size: 12px;
+  }
+  .dateInput {
+    padding: 8px;
+    font-size: 12px;
+  }
+  .formGroup input{
+    font-size: 12px;
+  }
+  .resultsCount {
+    font-size: 10px;
+  }
+  .resultsTable th{
+    font-size: 12px;
+  }
+  .tableCell {
+    padding: 8px;
+    font-size: 10px;
+  }
+  .secondaryButton {
+    padding: 4px 8px;
+    font-size: 10px;
+  }
+  .fileType {
+    background-color: #edf2f7;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    color: #4a5568;
+  }
+  .fileName {
+   font-size: 10px;
+  }
+  .resultsContainer {
+  font-size: 10px;
+  }
+  .resultsContainer span {
+  font-size: 10px;
+  }
+
 }

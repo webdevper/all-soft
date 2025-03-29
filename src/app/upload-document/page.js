@@ -6,7 +6,7 @@ import { toast } from 'react-hot-toast';
 import styles from "../styles/uploadDoc.module.css";
 import Navbar from "../components/navbar";
 
-// Dynamic imports for browser-only components
+
 const DatePicker = dynamic(
   () => import("react-datepicker").then((mod) => mod.default),
   { 
@@ -19,7 +19,7 @@ const Select = dynamic(() => import("react-select").then((mod) => mod.default), 
 const CreatableSelect = dynamic(() => import("react-select/creatable").then((mod) => mod.default), { ssr: false });
 
 const FileUpload = () => {
-  // Form state
+ 
   const [formData, setFormData] = useState({
     document_date: new Date(),
     major_head: null,
@@ -60,7 +60,7 @@ const FileUpload = () => {
 
       setIsLoading(true);
       try {
-        // Replace with actual API calls in production
+        // Replace  actual API calls in production
         let options = [];
         if (formData.major_head.value === 'Personal') {
           // const response = await axios.get('/api/personalNames');
@@ -97,7 +97,7 @@ const FileUpload = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
+    // supportfile type
     const allowedTypes = ["image/jpeg", "image/png", "image/gif", "application/pdf"];
     if (!allowedTypes.includes(file.type)) {
       toast.error("Only JPG, PNG, GIF, and PDF files are allowed");
@@ -105,7 +105,7 @@ const FileUpload = () => {
       return;
     }
 
-    // Validate file size (10MB)
+    //support file size (10MB)
     if (file.size > 10 * 1024 * 1024) {
       toast.error("File size exceeds 10MB limit");
       e.target.value = "";
