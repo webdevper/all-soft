@@ -234,6 +234,13 @@
   width: 20px;
   height: 20px;
 }
+.errorBanner {
+  padding: 1rem;
+  background-color: #ffebee;
+  color: #c62828;
+  border-left: 4px solid #c62828;
+  margin-bottom: 1rem;
+}
 
 .previewModal {
   position: fixed;

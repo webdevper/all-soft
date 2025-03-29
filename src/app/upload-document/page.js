@@ -1,406 +1,338 @@
 'use client'
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import dynamic from 'next/dynamic';
-import Navbar from "../components/navbar";
+import axios from 'axios';
+import { toast } from 'react-hot-toast';
 import styles from "../styles/uploadDoc.module.css";
+import Navbar from "../components/navbar";
 
-// Dynamically import components that use window/document with no SSR
+// Dynamic imports for browser-only components
 const DatePicker = dynamic(
   () => import("react-datepicker").then((mod) => mod.default),
   { 
     ssr: false,
-    loading: () => <input type="text" className={styles.datePicker} disabled />
+    loading: () => <input type="text" className={styles.input} disabled />
   }
 );
 
-const Select = dynamic(
-  () => import("react-select").then((mod) => mod.default),
-  { ssr: false }
-);
-
-const CreatableSelect = dynamic(
-  () => import("react-select/creatable").then((mod) => mod.default),
-  { ssr: false }
-);
-
-// Constants
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-const ALLOWED_FILE_TYPES = [
-  "image/jpeg",
-  "image/png",
-  "image/gif",
-  "application/pdf",
-];
-
-const majorHeadOptions = [
-  { value: "Personal", label: "Personal" },
-  { value: "Professional", label: "Professional" },
-];
-
-const minorHeadOptions = {
-  Personal: [
-    { value: "John", label: "John" },
-    { value: "Tom", label: "Tom" },
-    { value: "Emily", label: "Emily" },
-  ],
-  Professional: [
-    { value: "Accounts", label: "Accounts" },
-    { value: "HR", label: "HR" },
-    { value: "IT", label: "IT" },
-    { value: "Finance", label: "Finance" },
-  ],
-};
+const Select = dynamic(() => import("react-select").then((mod) => mod.default), { ssr: false });
+const CreatableSelect = dynamic(() => import("react-select/creatable").then((mod) => mod.default), { ssr: false });
 
 const FileUpload = () => {
   // Form state
-  const [selectedDate, setSelectedDate] = useState(new Date());
-  const [majorHead, setMajorHead] = useState(null);
-  const [minorHead, setMinorHead] = useState(null);
-  const [tags, setTags] = useState([]);
+  const [formData, setFormData] = useState({
+    document_date: new Date(),
+    major_head: null,
+    minor_head: null,
+    tags: [],
+    document_remarks: "",
+    file: null
+  });
+  const [minorHeadOptions, setMinorHeadOptions] = useState([]);
   const [availableTags, setAvailableTags] = useState([]);
-  const [remarks, setRemarks] = useState("");
-  const [selectedFile, setSelectedFile] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [uploadStatus, setUploadStatus] = useState(null);
-  const [hasMounted, setHasMounted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  useEffect(() => {
-    setHasMounted(true);
-  }, []);
-
-  // Fetch available tags from API
+  // Fetch initial data (tags)
   useEffect(() => {
     const fetchTags = async () => {
       try {
-        const mockTags = [
-          { value: "RMC", label: "RMC" },
-          { value: "2024", label: "2024" },
-          { value: "work_order", label: "Work Order" },
-        ];
-        setAvailableTags(mockTags);
+        // Replace with actual API call in production
+        // const response = await axios.get('/api/documentTags');
+        const mockTags = ["Contract", "Invoice", "Receipt", "HR", "Legal"];
+        setAvailableTags(mockTags.map(tag => ({ value: tag, label: tag })));
       } catch (error) {
-        console.error("Error fetching tags:", error);
-        setUploadStatus({
-          message: "Failed to load tags. Please refresh the page.",
-          type: "error",
-        });
+        toast.error("Failed to load tags");
+        console.error("Tags error:", error);
       }
     };
 
     fetchTags();
   }, []);
 
-  // Reset minor head when major head changes
+  // Fetch minor head options when major head changes
   useEffect(() => {
-    setMinorHead(null);
-  }, [majorHead]);
-
-  // Handle file selection with validation
-  const handleFileChange = useCallback((e) => {
-    if (!e.target.files || e.target.files.length === 0) {
-      setUploadStatus({
-        message: "No file selected",
-        type: "error",
-      });
-      return;
-    }
-
-    const file = e.target.files[0];
-
-    // Validate file type
-    if (!ALLOWED_FILE_TYPES.includes(file.type)) {
-      setUploadStatus({
-        message: "Only image (JPEG, PNG, GIF) and PDF files are allowed",
-        type: "error",
-      });
-      e.target.value = "";
-      return;
-    }
-
-    // Validate file size
-    if (file.size > MAX_FILE_SIZE) {
-      setUploadStatus({
-        message: "File size exceeds 10MB limit",
-        type: "error",
-      });
-      e.target.value = "";
-      return;
-    }
-
-    setSelectedFile(file);
-    setUploadStatus({
-      message: `${file.name} selected (${(file.size / (1024 * 1024)).toFixed(2)}MB)`,
-      type: "success",
-    });
-  }, []);
-
-  // Validate form before submission
-  const validateForm = useCallback(() => {
-    if (!selectedFile) {
-      setUploadStatus({
-        message: "Please select a file to upload",
-        type: "error",
-      });
-      return false;
-    }
-
-    if (!majorHead || !minorHead) {
-      setUploadStatus({
-        message: "Please select both category and sub-category",
-        type: "error",
-      });
-      return false;
-    }
-
-    return true;
-  }, [selectedFile, majorHead, minorHead]);
-
-  // Prepare form data for API submission
-  const prepareFormData = useCallback(() => {
-    return {
-      major_head: majorHead?.value || null,
-      minor_head: minorHead?.value || null,
-      document_date: selectedDate.toISOString().split("T")[0],
-      document_remarks: remarks,
-      tags: tags.map((tag) => ({ tag_name: tag.value })),
-      user_id: "current_user_id",
-    };
-  }, [majorHead, minorHead, selectedDate, remarks, tags]);
-
-  // Handle form submission
-  const handleSubmit = useCallback(
-    async (e) => {
-      e.preventDefault();
-
-      if (!validateForm()) return;
+    const fetchMinorHeadOptions = async () => {
+      if (!formData.major_head) {
+        setMinorHeadOptions([]);
+        return;
+      }
 
       setIsLoading(true);
-      setUploadStatus({ message: "Uploading file...", type: "info" });
-
       try {
-        const formData = new FormData();
-        if (selectedFile) {
-          formData.append("file", selectedFile);
+        // Replace with actual API calls in production
+        let options = [];
+        if (formData.major_head.value === 'Personal') {
+          // const response = await axios.get('/api/personalNames');
+          options = ["John Doe", "Jane Smith", "Robert Johnson"];
+        } else {
+          // const response = await axios.get('/api/professionalDepartments');
+          options = ["Finance", "HR", "IT", "Operations"];
         }
-        formData.append("data", JSON.stringify(prepareFormData()));
 
-        await new Promise((resolve) => setTimeout(resolve, 1500));
-
-        setUploadStatus({
-          message: "File uploaded successfully!",
-          type: "success",
-        });
-        resetForm();
+        setMinorHeadOptions(options.map(option => ({
+          value: option,
+          label: option
+        })));
       } catch (error) {
-        console.error("Upload error:", error);
-        setUploadStatus({
-          message: "Upload failed. Please try again.",
-          type: "error",
-        });
+        toast.error("Failed to load options");
+        console.error("Options error:", error);
       } finally {
         setIsLoading(false);
       }
-    },
-    [selectedFile, prepareFormData, validateForm]
-  );
+    };
 
-  // Reset form after successful upload
-  const resetForm = useCallback(() => {
-    setSelectedFile(null);
-    setMajorHead(null);
-    setMinorHead(null);
-    setTags([]);
-    setRemarks("");
-    const fileInput = document.getElementById("file-upload");
-    if (fileInput) fileInput.value = "";
-  }, []);
+    fetchMinorHeadOptions();
+  }, [formData.major_head]);
 
-  // Get current minor head options based on major head selection
-  const getMinorHeadOptions = useCallback(() => {
-    if (!majorHead) return [];
-    return minorHeadOptions[majorHead.value] || [];
-  }, [majorHead]);
+  const handleInputChange = (name, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [name]: value,
+      ...(name === 'major_head' && { minor_head: null }) // Reset minor head when major changes
+    }));
+  };
 
-  if (!hasMounted) {
-    return null;
-  }
+  const handleFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const allowedTypes = ["image/jpeg", "image/png", "image/gif", "application/pdf"];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error("Only JPG, PNG, GIF, and PDF files are allowed");
+      e.target.value = "";
+      return;
+    }
+
+    // Validate file size (10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("File size exceeds 10MB limit");
+      e.target.value = "";
+      return;
+    }
+
+    handleInputChange('file', file);
+    toast.success(`${file.name} selected`);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+  
+    // Validation
+    if (!formData.file) {
+      toast.error("Please select a file");
+      setIsSubmitting(false);
+      return;
+    }
+  
+    if (!formData.major_head || !formData.minor_head) {
+      toast.error("Please select both category and sub-category");
+      setIsSubmitting(false);
+      return;
+    }
+  
+    try {
+      const payload = new FormData();
+      payload.append('file', formData.file);
+      payload.append('major_head', formData.major_head.value);
+      payload.append('minor_head', formData.minor_head.value);
+      payload.append('document_date', formData.document_date.toISOString().split('T')[0]);
+      payload.append('document_remarks', formData.document_remarks);
+      formData.tags.forEach(tag => payload.append('tags[]', tag.value));
+  
+      const response = await fetch('/api/saveDocumentEntry', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: payload
+      });
+  
+      const result = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(result.error || 'Upload failed');
+      }
+  
+      toast.success("Document uploaded successfully!");
+      
+      // Reset form
+      setFormData({
+        document_date: new Date(),
+        major_head: null,
+        minor_head: null,
+        tags: [],
+        document_remarks: "",
+        file: null
+      });
+      document.getElementById("file-upload").value = "";
+    } catch (error) {
+      console.error("Upload error:", error);
+      toast.error(error.message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <>
-      <Navbar />
-      <div className={styles.uploadContainer}>
-        <h1 className={styles.title}>Upload Document</h1>
+    <Navbar/>
+    <div className={styles.container}>
+      <header className={styles.header}>
+        <h1 className={styles.title}>Document Upload</h1>
+        <p className={styles.subtitle}>Upload and categorize your documents</p>
+      </header>
 
-        <form onSubmit={handleSubmit} className={styles.uploadForm} aria-labelledby="form-title">
-          {/* Date Picker */}
-          <div className={styles.formGroup}>
-            <label htmlFor="document-date" className={styles.label}>
-              Document Date *
-            </label>
-            <DatePicker
-              id="document-date"
-              selected={selectedDate}
-              onChange={(date) => setSelectedDate(date)}
-              dateFormat="dd/mm/yyyy"
-              className={styles.datePicker}
-              required
-              aria-required="true"
-              maxDate={new Date()}
-            />
-          </div>
+      <form onSubmit={handleSubmit} className={styles.form}>
+        {/* Date Picker */}
+        <div className={styles.formGroup}>
+          <label className={styles.label}>
+            Document Date <span className={styles.required}>*</span>
+          </label>
+          <DatePicker
+            selected={formData.document_date}
+            onChange={(date) => handleInputChange('document_date', date)}
+            dateFormat="dd/MM/yyyy"
+            className={styles.input}
+            maxDate={new Date()}
+            required
+          />
+        </div>
 
-          {/* Category Dropdown */}
-          <div className={styles.formGroup}>
-            <label htmlFor="major-head" className={styles.label}>
-              Category *
-            </label>
-            <Select
-              id="major-head"
-              options={majorHeadOptions}
-              value={majorHead}
-              onChange={setMajorHead}
-              placeholder="Select Personal or Professional"
-              className={styles.dropdown}
-              classNamePrefix="select"
-              required
-              aria-required="true"
-              isClearable
-            />
-          </div>
+        {/* Major Head (Category) */}
+        <div className={styles.formGroup}>
+          <label className={styles.label}>
+            Category <span className={styles.required}>*</span>
+          </label>
+          <Select
+            options={[
+              { value: 'Personal', label: 'Personal' },
+              { value: 'Professional', label: 'Professional' }
+            ]}
+            value={formData.major_head}
+            onChange={(option) => handleInputChange('major_head', option)}
+            placeholder="Select category..."
+            className={styles.select}
+            classNamePrefix="select"
+            required
+          />
+        </div>
 
-          {/* Sub-category Dropdown (dynamic) */}
-          <div className={styles.formGroup}>
-            <label htmlFor="minor-head" className={styles.label}>
-              {majorHead?.value === "Personal" ? "Name" : "Department"} *
-            </label>
-            <Select
-              id="minor-head"
-              options={getMinorHeadOptions()}
-              value={minorHead}
-              onChange={setMinorHead}
-              placeholder={`Select ${
-                majorHead?.value === "Personal" ? "name" : "department"
-              }`}
-              className={styles.dropdown}
-              classNamePrefix="select"
-              isDisabled={!majorHead}
-              required
-              aria-required="true"
-              isClearable
-            />
-          </div>
+        {/* Minor Head (Dynamic) */}
+        <div className={styles.formGroup}>
+          <label className={styles.label}>
+            {formData.major_head?.value === 'Personal' ? 'Name' : 'Department'} <span className={styles.required}>*</span>
+          </label>
+          <Select
+            options={minorHeadOptions}
+            value={formData.minor_head}
+            onChange={(option) => handleInputChange('minor_head', option)}
+            isDisabled={!formData.major_head || isLoading}
+            isLoading={isLoading}
+            placeholder={
+              isLoading ? "Loading..." : 
+              formData.major_head ? 
+                `Select ${formData.major_head.value === 'Personal' ? 'name' : 'department'}` : 
+                "Select category first"
+            }
+            className={styles.select}
+            classNamePrefix="select"
+            required
+          />
+        </div>
 
-          {/* Tags Input */}
-          <div className={styles.formGroup}>
-            <label htmlFor="document-tags" className={styles.label}>
-              Tags
-            </label>
-            <CreatableSelect
-              id="document-tags"
-              isMulti
-              options={availableTags}
-              value={tags}
-              onChange={setTags}
-              placeholder="Add or select tags"
-              className={styles.dropdown}
-              classNamePrefix="select"
-              aria-label="Document tags"
-            />
-          </div>
+        {/* Tags */}
+        <div className={styles.formGroup}>
+          <label className={styles.label}>Tags</label>
+          <CreatableSelect
+            isMulti
+            options={availableTags}
+            value={formData.tags}
+            onChange={(options) => handleInputChange('tags', options)}
+            placeholder="Add or select tags..."
+            className={styles.select}
+            classNamePrefix="select"
+          />
+        </div>
 
-          {/* Remarks */}
-          <div className={styles.formGroup}>
-            <label htmlFor="document-remarks" className={styles.label}>
-              Remarks
-            </label>
-            <textarea
-              id="document-remarks"
-              className={styles.textarea}
-              value={remarks}
-              onChange={(e) => setRemarks(e.target.value)}
-              placeholder="Enter any additional remarks..."
-              rows={3}
-              aria-label="Document remarks"
-            />
-          </div>
+        {/* Remarks */}
+        <div className={styles.formGroup}>
+          <label className={styles.label}>Remarks</label>
+          <textarea
+            value={formData.document_remarks}
+            onChange={(e) => handleInputChange('document_remarks', e.target.value)}
+            className={styles.textarea}
+            placeholder="Enter any additional remarks..."
+            rows={4}
+          />
+        </div>
 
-          {/* File Upload */}
-          <div className={styles.formGroup}>
-            <label htmlFor="file-upload" className={styles.label}>
-              Document *
-            </label>
-            <div className={styles.fileUploadWrapper}>
-              <label htmlFor="file-upload" className={styles.fileUploadLabel}>
-                {selectedFile ? (
-                  <>
-                    <span className={styles.fileName}>{selectedFile.name}</span>
-                    <span className={styles.fileSize}>
-                      ({(selectedFile.size / (1024 * 1024)).toFixed(2)}MB)
-                    </span>
-                  </>
-                ) : (
-                  "Choose file (PDF or Image)"
-                )}
-                <input
-                  id="file-upload"
-                  type="file"
-                  onChange={handleFileChange}
-                  accept=".pdf,.jpg,.jpeg,.png,.gif"
-                  className={styles.fileInput}
-                  required
-                  aria-required="true"
-                />
-              </label>
-              {selectedFile && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelectedFile(null);
-                    const fileInput = document.getElementById("file-upload");
-                    if (fileInput) fileInput.value = "";
-                  }}
-                  className={styles.clearFileButton}
-                  aria-label="Clear selected file"
-                >
-                  ×
-                </button>
+        {/* File Upload */}
+        <div className={styles.formGroup}>
+          <label className={styles.label}>
+            Document <span className={styles.required}>*</span>
+          </label>
+          <div className={styles.fileUploadWrapper}>
+            <label htmlFor="file-upload" className={styles.fileUploadLabel}>
+              {formData.file ? (
+                <span className={styles.fileName}>{formData.file.name}</span>
+              ) : (
+                <>
+                  <svg className={styles.uploadIcon} viewBox="0 0 24 24">
+                    <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                  </svg>
+                  <span>Choose file</span>
+                </>
               )}
-            </div>
-            <p className={styles.fileHint}>
-              Allowed formats: PDF, JPG, PNG, GIF (Max 10MB)
-            </p>
-          </div>
-
-          {/* Status Message */}
-          {uploadStatus && (
-            <div
-              className={`${styles.statusMessage} ${styles[uploadStatus.type]}`}
-              role="alert"
-              aria-live="polite"
-            >
-              {uploadStatus.message}
-            </div>
-          )}
-
-          {/* Submit Button */}
-          <button
-            type="submit"
-            className={styles.submitButton}
-            disabled={isLoading}
-            aria-busy={isLoading}
-          >
-            {isLoading ? (
-              <>
-                <span className={styles.spinner} aria-hidden="true"></span>
-                <span>Uploading...</span>
-              </>
-            ) : (
-              "Upload Document"
+              <input
+                id="file-upload"
+                type="file"
+                onChange={handleFileChange}
+                accept=".pdf,.jpg,.jpeg,.png,.gif"
+                className={styles.fileInput}
+                required
+              />
+            </label>
+            {formData.file && (
+              <button
+                type="button"
+                onClick={() => {
+                  handleInputChange('file', null);
+                  document.getElementById("file-upload").value = "";
+                }}
+                className={styles.clearFileButton}
+                aria-label="Clear file selection"
+              >
+                &times;
+              </button>
             )}
-          </button>
-        </form>
-      </div>
+          </div>
+          <p className={styles.fileHint}>
+            Allowed formats: PDF, JPG, PNG, GIF (Max 10MB)
+          </p>
+        </div>
+
+        {/* Submit Button */}
+        <button
+          type="submit"
+          className={styles.submitButton}
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? (
+            <>
+              <span className={styles.spinner} aria-hidden="true"></span>
+              Uploading...
+            </>
+          ) : (
+            'Upload Document'
+          )}
+        </button>
+      </form>
+    </div>
     </>
+
   );
 };
 
