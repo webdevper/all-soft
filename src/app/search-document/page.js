@@ -366,14 +366,14 @@ const DocumentSearch = () => {
             {searchResults.length > 0 && (
               <div className={styles.resultsActions}>
                 <span className={styles.resultsCount}>
-                  {searchResults.length} documents found 
+                  {searchResults.length} documents found
                 </span>
                 <button
                   onClick={handleDownloadAll}
                   className={styles.secondaryButton}
                   disabled={isLoading}
                 >
-                    Download All as ZIP
+                  Download All as ZIP
                 </button>
               </div>
             )}
@@ -432,7 +432,7 @@ const DocumentSearch = () => {
                           {file.type.split('/').pop().toUpperCase()}
                         </span>
                       </td>
-                      <td>{file.size}KB</td>
+                      <td>{file.size}</td>
                       <td>{new Date(file.date).toLocaleDateString()}</td>
                       <td>
                         <span className={styles.categoryBadge}>

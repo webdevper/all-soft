@@ -6,7 +6,7 @@ import { toast } from 'react-hot-toast';
 import styles from "../styles/uploadDoc.module.css";
 import Navbar from "../components/navbar";
 
-
+// Dynamic imports for browser-only components
 const DatePicker = dynamic(
   () => import("react-datepicker").then((mod) => mod.default),
   { 
@@ -19,7 +19,7 @@ const Select = dynamic(() => import("react-select").then((mod) => mod.default), 
 const CreatableSelect = dynamic(() => import("react-select/creatable").then((mod) => mod.default), { ssr: false });
 
 const FileUpload = () => {
- 
+  // Form state
   const [formData, setFormData] = useState({
     document_date: new Date(),
     major_head: null,
@@ -60,7 +60,7 @@ const FileUpload = () => {
 
       setIsLoading(true);
       try {
-        // Replace  actual API calls in production
+        // Replace with actual API calls in production
         let options = [];
         if (formData.major_head.value === 'Personal') {
           // const response = await axios.get('/api/personalNames');
@@ -97,7 +97,7 @@ const FileUpload = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // supportfile type
+    // Validate file type
     const allowedTypes = ["image/jpeg", "image/png", "image/gif", "application/pdf"];
     if (!allowedTypes.includes(file.type)) {
       toast.error("Only JPG, PNG, GIF, and PDF files are allowed");
@@ -105,7 +105,7 @@ const FileUpload = () => {
       return;
     }
 
-    //support file size (10MB)
+    // Validate file size (10MB)
     if (file.size > 10 * 1024 * 1024) {
       toast.error("File size exceeds 10MB limit");
       e.target.value = "";
@@ -119,21 +119,22 @@ const FileUpload = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-  
+
     // Validation
     if (!formData.file) {
       toast.error("Please select a file");
       setIsSubmitting(false);
       return;
     }
-  
+
     if (!formData.major_head || !formData.minor_head) {
       toast.error("Please select both category and sub-category");
       setIsSubmitting(false);
       return;
     }
-  
+
     try {
+      // Prepare FormData for API
       const payload = new FormData();
       payload.append('file', formData.file);
       payload.append('major_head', formData.major_head.value);
@@ -141,23 +142,19 @@ const FileUpload = () => {
       payload.append('document_date', formData.document_date.toISOString().split('T')[0]);
       payload.append('document_remarks', formData.document_remarks);
       formData.tags.forEach(tag => payload.append('tags[]', tag.value));
-  
-      const response = await fetch('/api/saveDocumentEntry', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: payload
-      });
-  
-      const result = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(result.error || 'Upload failed');
-      }
-  
+
+      // In production, use:
+      // const response = await axios.post('/api/saveDocumentEntry', payload, {
+      //   headers: {
+      //     'Content-Type': 'multipart/form-data',
+      //     'Authorization': `Bearer ${localStorage.getItem('token')}`
+      //   }
+      // });
+
+      // Mock API call
+      await new Promise(resolve => setTimeout(resolve, 1500));
       toast.success("Document uploaded successfully!");
-      
+
       // Reset form
       setFormData({
         document_date: new Date(),
@@ -170,7 +167,7 @@ const FileUpload = () => {
       document.getElementById("file-upload").value = "";
     } catch (error) {
       console.error("Upload error:", error);
-      toast.error(error.message);
+      toast.error(error.response?.data?.message || "Upload failed. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
